@@ -3,37 +3,52 @@ import { Question } from '../data/questions';
 
 interface QuestionCardProps {
     question: Question;
+    questionNumber: number;
     onNext: () => void;
     onPrevious: () => void;
     hasNext: boolean;
     hasPrevious: boolean;
+    savedAnswer?: number;
+    onAnswer: (questionId: number, selectedOption: number) => void;
 }
 
 const QuestionCard: React.FC<QuestionCardProps> = ({
     question,
+    questionNumber,
     onNext,
     onPrevious,
     hasNext,
     hasPrevious,
+    savedAnswer,
+    onAnswer,
 }) => {
-    const [selectedOption, setSelectedOption] = useState<number | null>(null);
-    const [showAnswer, setShowAnswer] = useState(false);
-    const [isAnswered, setIsAnswered] = useState(false);
+    const [selectedOption, setSelectedOption] = useState<number | null>(
+        savedAnswer !== undefined ? savedAnswer : null
+    );
+    const [showAnswer, setShowAnswer] = useState(savedAnswer !== undefined);
+    const [isAnswered, setIsAnswered] = useState(savedAnswer !== undefined);
     const [key, setKey] = useState(question.id);
 
-    // Reset state when question changes
+    // Reset state when question changes, restoring from savedAnswer if available
     useEffect(() => {
-        setSelectedOption(null);
-        setShowAnswer(false);
-        setIsAnswered(false);
+        if (savedAnswer !== undefined) {
+            setSelectedOption(savedAnswer);
+            setShowAnswer(true);
+            setIsAnswered(true);
+        } else {
+            setSelectedOption(null);
+            setShowAnswer(false);
+            setIsAnswered(false);
+        }
         setKey(question.id);
-    }, [question.id]);
+    }, [question.id, savedAnswer]);
 
     const handleOptionClick = (index: number) => {
         if (isAnswered) return;
 
         setSelectedOption(index);
         setIsAnswered(true);
+        onAnswer(question.id, index);
 
         if (index !== question.correctAnswer) {
             // Wrong answer - show check answer button after a brief moment
@@ -56,7 +71,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
     return (
         <div className="question-card glass-card" key={key}>
             <span className="question-section">{question.section}</span>
-            <p className="question-number">Question {question.id}</p>
+            <p className="question-number">Question {questionNumber}</p>
             <h2 className="question-text">{question.question}</h2>
 
             <div className="options-list">
